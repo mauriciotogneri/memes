@@ -1,0 +1,122 @@
+
+<html lang="en">
+  <head>
+    <title>Memes</title>
+      <meta name="viewport" content="width=device-width, user-scalable=no">
+      <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+      <link rel="icon" href="favicon.png" type="image/x-icon" />
+    <script>
+      // Meme collection started on 27/11/2016
+
+      let memes = []
+
+      function gif(url, tags)
+      {
+        return {
+          url: 'https://media.giphy.com/media/' + url + '/giphy.gif',
+          tags: tags
+        }
+      }
+
+      function image(url, tags)
+      {
+        return {
+          url: 'https://i.imgur.com/' + url + '.jpg',
+          tags: tags
+        }
+      }
+
+      function search(event, text)
+      {
+        if (event.keyCode == 13)
+        {
+          const urls = filter(text)
+          const list = document.getElementById('result')
+
+          while (list.firstChild) {
+            list.removeChild(list.firstChild)
+          }
+
+          for (var url of urls)
+          {
+            const img = document.createElement('img')
+            img.src = url
+            img.addEventListener('click', function() {
+              navigator.clipboard.writeText(img.src)  
+            })
+
+            list.appendChild(document.createElement('br'))
+            list.appendChild(img)
+            list.appendChild(document.createElement('br'))
+          }
+        }
+      }
+
+      function filter(text)
+      {
+        const result = []
+
+        for (var meme of memes)
+        {
+          if (meme.tags.includes(text))
+          {
+          result.push(meme.url)
+          }  
+        }
+
+        return result
+      }
+
+      function loadList(json)
+      {
+        const input = document.getElementById('input')
+        input.style.visibility = 'visible'
+        input.focus()
+        memes = []
+
+        for (const gifKey of Object.keys(json.gif)) {
+          memes.push(gif(gifKey, json.gif[gifKey]))
+        }
+        
+        for (const imageKey of Object.keys(json.image)) {
+          memes.push(image(imageKey, json.image[imageKey]))
+        }
+      }
+
+      function loadLocalMemes()
+      {
+        const cache = localStorage.getItem('MEMES')
+        
+        if (cache) {
+          loadList(JSON.parse(cache))
+        } else {
+          document.write('Loading memes…')
+        }
+      }
+
+      function loadRemoteMemes()
+      {
+        const xhr = new XMLHttpRequest()
+        xhr.open("GET", "https://script.google.com/macros/s/AKfycbyw8aRqFno3a1QGq10zLfgYnIQfLf4FG3-YOJjWHajxIFOIEl5m66VhISpYTZvLPe5Kwg/exec")
+        xhr.onreadystatechange = function () {
+           if (xhr.readyState === 4) {
+              const json = JSON.parse(xhr.responseText)
+              localStorage.setItem('MEMES', xhr.responseText)
+              loadList(json)
+           }
+        }
+        xhr.send()
+      }
+
+      function loadMemes()
+      {
+        loadLocalMemes()
+        loadRemoteMemes()
+      }
+    </script>
+  </head>
+  <body onload="loadMemes()">
+    <input id='input' type='text' style='visibility:hidden;width:300px;font-size:1.5em' autofocus onkeyup='search(event, this.value.toLowerCase())' />
+    <div id='result'></div>
+  </body>
+</html>
